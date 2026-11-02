@@ -4,13 +4,14 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { hermesApi } from './hermes.mjs';
 import { graphApi } from './graph.mjs';
-import { localSystem } from './local-system.mjs';
+import { memoryEngine } from './memory-engine.mjs';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const dataDir=path.join(root,'data');
 const configPath=path.join(dataDir,'cloudru-settings.json');
-const handleHermes=hermesApi(dataDir);
+const memory=memoryEngine(dataDir);
+const handleHermes=hermesApi(dataDir,memory);
 const handleGraph=graphApi(dataDir);
-const memory=localSystem(dataDir);
+
 const port=Number(process.env.PORT||57474);
 const host='127.0.0.1';
 const readJson=async p=>{try{return JSON.parse(await fs.readFile(p,'utf8'))}catch(e){if(e.code==='ENOENT')return {};throw e}};
@@ -37,7 +38,7 @@ async function api(req,res,url){
  if(req.method==='GET'&&url.pathname==='/api/memory/status')return send(res,200,await memory.status());
  if(url.pathname==='/api/graph')return handleGraph(req,res,url,send);
  if(url.pathname.startsWith('/api/hermes/'))return handleHermes(req,res,url,send,body);
- if(req.method==='GET'&&url.pathname==='/api/health')return send(res,200,{ok:true,version:'0.4.0'});
+ if(req.method==='GET'&&url.pathname==='/api/health')return send(res,200,{ok:true,version:'0.5.0'});
  if(req.method==='GET'&&url.pathname==='/api/settings')return send(res,200,safeConfig(await readJson(configPath)));
  if(req.method==='POST'&&url.pathname==='/api/settings'){
   const b=await body(req),old=await readJson(configPath);
@@ -64,7 +65,7 @@ async function api(req,res,url){
    const result=await r.json().catch(()=>({}));
    if(!r.ok)return send(res,502,{error:'Provider returned HTTP '+r.status,detail:JSON.stringify(result).slice(0,400)});
    const reply=result.choices?.[0]?.message?.content||'';
-   if(url.pathname==='/api/chat'&&reply)await memory.record(messages,reply,'cloud');
+   if(url.pathname==='/api/chat'&&reply)await memory.save(messages,reply,'cloud');
    return send(res,200,{reply,model:result.model||c.model});
   }finally{clearTimeout(timer)}
  }
