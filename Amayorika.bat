@@ -11,6 +11,16 @@ echo.>>"%LOG%"
 echo ===== Amayorika launch %DATE% %TIME% =====>>"%LOG%"
 echo [INFO] Project: "%ROOT%"
 if not exist "package.json" goto :noapp
+if not exist ".runtime\hermes\.installed" (
+ echo [INFO] Installing Hermes Agent into project folder...
+ powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\install-hermes.ps1" >>"%LOG%" 2>&1
+ if errorlevel 1 (
+  echo [WARN] Hermes installation failed. Amayorika will still start.
+  echo [WARN] See "%LOG%" for details.
+ ) else (
+  echo [INFO] Hermes installation completed.
+ )
+)
 where node.exe >nul 2>&1
 if errorlevel 1 goto :nonode
 where npm.cmd >nul 2>&1
