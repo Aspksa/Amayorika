@@ -83,3 +83,9 @@ Cloud.ru-чат теперь сохраняет ответы в `data/chats/arch
 Добавлена локальная API-очередь заданий агентов: `POST /api/agents/task` с JSON `{"type":"analyze","text":"..."}`. Задания записываются в `data/agents/tasks.jsonl`, **но не выполняются автоматически**. Раздел «Агенты» отображает это ограничение.
 
 **Не реализовано в этой версии:** прямое подключение к API MemOS, автоматическая синхронизация MemOS с Project Golem, полноценный 3D-движок Golem, безопасное исполнение агентов, резервирование всех каталогов и автоматическое восстановление. Для Hermes архивирование в данном обновлении не подключено. Проверка на Windows и интеграционные тесты необходимы перед эксплуатацией с важными данными.
+
+## Загрузка шести сторонних проектов
+
+При первом запуске `Amayorika.bat` вызывается `scripts/install-third-party.ps1`. Скрипт клонирует исходники MemOS, Project Golem, Hermes Agent, Mem0, Graphiti и CrewAI в `.runtime/third-party/<имя>`, фиксирует фактические SHA коммитов в `.runtime/third-party-install-status.json`. Данные `data/` не затрагиваются. Для повторной проверки запустите `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-third-party.ps1`; с `-Force` выполняется fast-forward обновление исходников. Требуются Git и интернет.
+
+**Установка исходников не означает запуск или интеграцию всех сервисов.** Изоляция Python-зависимостей для Mem0, Graphiti и CrewAI доступна отдельно: `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-third-party.ps1 -InstallPython` (Python 3.11). Это экспериментальная установка пакетов в отдельные venv; MemOS и Hermes имеют свои установщики. Project Golem требует дополнительной настройки модели, индекса и сервера. Включение сторонних модулей и ключей делается только после проверки совместимости, лицензий и конфигурации. Docker не используется. Не копируйте токены в GitHub.

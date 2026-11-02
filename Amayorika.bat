@@ -11,6 +11,11 @@ echo.>>"%LOG%"
 echo ===== Amayorika launch %DATE% %TIME% =====>>"%LOG%"
 echo [INFO] Project: "%ROOT%"
 if not exist "package.json" goto :noapp
+if not exist ".runtime\third-party-install-status.json" (
+ echo [INFO] Downloading third-party agent and memory sources...
+ powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\install-third-party.ps1" >>"%LOG%" 2>&1
+ if errorlevel 1 echo [WARN] Some sources failed. See logs and retry with scripts\install-third-party.ps1
+)
 if not exist ".runtime\hermes\.installed" (
  echo [INFO] Installing Hermes Agent into project folder...
  powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\install-hermes.ps1" >>"%LOG%" 2>&1
