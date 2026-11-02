@@ -33,7 +33,9 @@ foreach ($candidate in @('py.exe','python.exe')) {
 }
 if (-not $python) { throw 'Python 3.11 required for this MemOS installation profile. Install Python 3.11 and rerun BAT.' }
 if (-not (Test-Path (Join-Path $venv 'Scripts\python.exe'))) {
- & $python[0] @($python | Select-Object -Skip 1) -m venv $venv
+ $pythonExe = $python[0]
+$pythonArgs = @($python | Select-Object -Skip 1)
+& $pythonExe @pythonArgs -m venv $venv
  if ($LASTEXITCODE -ne 0) { throw 'Failed to create MemOS venv.' }
 }
 $venvPython = Join-Path $venv 'Scripts\python.exe'
