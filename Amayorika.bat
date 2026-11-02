@@ -26,14 +26,21 @@ if errorlevel 1 goto :nonode
 where npm.cmd >nul 2>&1
 if errorlevel 1 goto :nonpm
 for /f "delims=" %%V in ('node.exe --version 2^>nul') do echo [INFO] Node %%V
-if not exist "node_modules\." (
- echo [INFO] Installing dependencies...
- call npm.cmd ci --no-audit --no-fund >>"%LOG%" 2>&1
- if errorlevel 1 (
-  echo [WARN] npm ci failed; trying npm install...
-  call npm.cmd install --no-audit --no-fund >>"%LOG%" 2>&1
+rem The current application has no external npm dependencies.
+rem Install only when package.json declares dependencies.
+node.exe -e "const p=require('./package.json');process.exit(Object.keys({...p.dependencies,...p.optionalDependencies,...p.devDependencies}).length?0:1)" >nul 2>&1
+if not errorlevel 1 (
+ if not exist "node_modules\." (
+  echo [INFO] Installing dependencies...
+  if exist "package-lock.json" (
+   call npm.cmd ci --no-audit --no-fund >>"%LOG%" 2>&1
+  ) else (
+   call npm.cmd install --no-audit --no-fund >>"%LOG%" 2>&1
+  )
   if errorlevel 1 goto :installfail
  )
+) else (
+ echo [INFO] No npm dependencies required. Skipping installation.
 )
 node.exe -e "const p=require('./package.json');process.exit(p.scripts&&p.scripts.start?0:1)" >nul 2>&1
 if not errorlevel 1 (
