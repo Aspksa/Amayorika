@@ -31,6 +31,15 @@ if not exist ".runtime\memos\.installed" (
   echo [INFO] MemOS installation completed.
  )
 )
+if not exist ".runtime\project-golem\.installed" (
+ echo [INFO] Downloading Project Golem into .runtime\project-golem...
+ powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\install-golem.ps1" >>"%LOG%" 2>&1
+ if errorlevel 1 (
+  echo [WARN] Project Golem download failed. See logs\launcher.log
+ ) else (
+  echo [INFO] Project Golem source downloaded.
+ )
+)
 where node.exe >nul 2>&1
 if errorlevel 1 goto :nonode
 where npm.cmd >nul 2>&1
