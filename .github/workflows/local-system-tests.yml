@@ -1,0 +1,28 @@
+name: Local system tests
+on:
+  push:
+    branches: [main, feature/integrated-memory-suite-20261102]
+  pull_request:
+jobs:
+  node:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm test
+      - run: node --check server.mjs
+      - run: node --check hermes.mjs
+      - run: node --check memory-engine.mjs
+      - run: node --check backups.mjs
+      - run: node --check agents-local.mjs
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm.cmd test
+      - run: node.exe --check server.mjs
