@@ -3,10 +3,12 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { hermesApi } from './hermes.mjs';
+import { graphApi } from './graph.mjs';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const dataDir=path.join(root,'data');
 const configPath=path.join(dataDir,'cloudru-settings.json');
 const handleHermes=hermesApi(dataDir);
+const handleGraph=graphApi(dataDir);
 const port=Number(process.env.PORT||57474);
 const host='127.0.0.1';
 const readJson=async p=>{try{return JSON.parse(await fs.readFile(p,'utf8'))}catch(e){if(e.code==='ENOENT')return {};throw e}};
@@ -15,8 +17,9 @@ async function body(req){let s='';for await(const c of req){s+=c;if(s.length>100
 const safeConfig=c=>({endpoint:c.endpoint||'',model:c.model||'',hasKey:!!c.apiKey});
 const validEndpoint=s=>{try{const u=new URL(s);return u.protocol==='https:'&&!u.username&&!u.password}catch{return false}};
 async function api(req,res,url){
+ if(url.pathname==='/api/graph')return handleGraph(req,res,url,send);
  if(url.pathname.startsWith('/api/hermes/'))return handleHermes(req,res,url,send,body);
- if(req.method==='GET'&&url.pathname==='/api/health')return send(res,200,{ok:true,version:'0.2.0'});
+ if(req.method==='GET'&&url.pathname==='/api/health')return send(res,200,{ok:true,version:'0.3.0'});
  if(req.method==='GET'&&url.pathname==='/api/settings')return send(res,200,safeConfig(await readJson(configPath)));
  if(req.method==='POST'&&url.pathname==='/api/settings'){
   const b=await body(req),old=await readJson(configPath);
@@ -51,7 +54,7 @@ const server=http.createServer(async(req,res)=>{
   const url=new URL(req.url,'http://localhost');
   if(url.pathname.startsWith('/api/'))return await api(req,res,url);
   if(req.method!=='GET')return send(res,405,{error:'Method not allowed'});
-  const file=({ '/':'index.html','/index.html':'index.html','/app.js':'app.js','/style.css':'style.css'})[url.pathname];
+  const file=({ '/':'index.html','/index.html':'index.html','/app.js':'app.js','/style.css':'style.css','/graph-view.js':'graph-view.js'})[url.pathname];
   if(!file)return send(res,404,{error:'Not found'});
   const content=await fs.readFile(path.join(root,'public',file));
   res.writeHead(200,{'Content-Type':mime[path.extname(file)],'X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'"});res.end(content);
