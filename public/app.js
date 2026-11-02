@@ -17,3 +17,16 @@ api('/api/hermes/settings').then(c=>{$('#hermes-url').value=c.url;$('#hermes-mod
 async function memoryStats(){try{const r=await api('/api/memory/status');$('#memory-stats').textContent=r.chats+' диалогов · '+r.nodes+' узлов · '+r.edges+' связей'}catch(e){$('#memory-stats').textContent=e.message}}
 $('#backup-create').addEventListener('click',async()=>{try{const r=await api('/api/backup',{method:'POST'});$('#memory-stats').textContent='Резервная копия: '+r.backup}catch(e){$('#memory-stats').textContent=e.message}});
 memoryStats();
+
+async function loadBackups(){const data=await api('/api/backups');const select=$('#restore-id');select.replaceChildren();for(const id of data.items){const option=document.createElement('option');option.value=id;option.textContent=id;select.append(option)}}
+$('#backup-list').addEventListener('click',()=>loadBackups().catch(e=>$('#backup-feedback').textContent=e.message));
+$('#backup-restore').addEventListener('click',async()=>{
+ const id=$('#restore-id').value;if(!id)return;
+ if(!confirm('Восстановить данные из '+id+'? Перед восстановлением будет создана защитная копия.'))return;
+ try{const r=await api('/api/restore',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});$('#backup-feedback').textContent='Восстановлено. Защитная копия: '+r.safetyBackup;memoryStats()}catch(e){$('#backup-feedback').textContent=e.message}
+});
+$('#agent-form').addEventListener('submit',async e=>{
+ e.preventDefault();const out=$('#agent-output');out.textContent='Выполнение…';
+ try{const r=await api('/api/agents/task',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:$('#agent-type').value,text:$('#agent-text').value})});out.textContent=JSON.stringify(r.result,null,2)}catch(err){out.textContent='Ошибка: '+err.message}
+});
+loadBackups().catch(()=>{});
