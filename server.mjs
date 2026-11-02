@@ -19,6 +19,21 @@ async function body(req){let s='';for await(const c of req){s+=c;if(s.length>100
 const safeConfig=c=>({endpoint:c.endpoint||'',model:c.model||'',hasKey:!!c.apiKey});
 const validEndpoint=s=>{try{const u=new URL(s);return u.protocol==='https:'&&!u.username&&!u.password}catch{return false}};
 async function api(req,res,url){
+ if(req.method==='POST'&&url.pathname==='/api/backup'){
+  const dest=path.join(dataDir,'backups',new Date().toISOString().replace(/[:.]/g,'-'));
+  await fs.mkdir(dest,{recursive:true});
+  for(const file of ['chats/archive.jsonl','knowledge-graph/graph.json']){
+   try{const target=path.join(dest,file);await fs.mkdir(path.dirname(target),{recursive:true});await fs.copyFile(path.join(dataDir,file),target)}catch(e){if(e.code!=='ENOENT')throw e}
+  }
+  return send(res,200,{ok:true,backup:path.basename(dest)});
+ }
+ if(req.method==='POST'&&url.pathname==='/api/agents/task'){
+  const task=await body(req);
+  if(!['analyze','organize','review'].includes(task.type)||typeof task.text!=='string'||task.text.length>4000)return send(res,400,{error:'Invalid task'});
+  const file=path.join(dataDir,'agents','tasks.jsonl');await fs.mkdir(path.dirname(file),{recursive:true});
+  const item={type:task.type,text:task.text,at:new Date().toISOString(),status:'queued'};
+  await fs.appendFile(file,JSON.stringify(item)+'\\n');return send(res,200,item);
+ }
  if(req.method==='GET'&&url.pathname==='/api/memory/status')return send(res,200,await memory.status());
  if(url.pathname==='/api/graph')return handleGraph(req,res,url,send);
  if(url.pathname.startsWith('/api/hermes/'))return handleHermes(req,res,url,send,body);
