@@ -21,6 +21,16 @@ if not exist ".runtime\hermes\.installed" (
   echo [INFO] Hermes installation completed.
  )
 )
+if not exist ".runtime\memos\.installed" (
+ echo [INFO] Installing MemOS locally into .runtime\memos...
+ powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\install-memos.ps1" >>"%LOG%" 2>&1
+ if errorlevel 1 (
+  echo [WARN] MemOS installation failed. See logs\launcher.log
+  echo [WARN] Amayorika will start without MemOS.
+ ) else (
+  echo [INFO] MemOS installation completed.
+ )
+)
 where node.exe >nul 2>&1
 if errorlevel 1 goto :nonode
 where npm.cmd >nul 2>&1
